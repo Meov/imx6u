@@ -11,3 +11,16 @@
 .version
 *.dtb
 *.bin
+*.su
+*.cfg
+*.lds
+*.imx
+*.d
+*.s
+*.a
+*.map
+*.cfgtmp
+*.srec
+*.sym
+generated/
+tmp/
