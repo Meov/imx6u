@@ -1,2 +1,0 @@
-nand.c:34:5:nand_register	16	static
-nand.c:86:6:nand_init	8	static

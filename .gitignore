@@ -1,0 +1,13 @@
+*.zip
+*.rar
+*.via
+*.tmp
+*.err
+*.o
+*.cmd
+*.cpio
+*.ko
+.config
+.version
+*.dtb
+*.bin
