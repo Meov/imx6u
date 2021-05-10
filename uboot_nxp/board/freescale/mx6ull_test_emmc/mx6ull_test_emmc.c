@@ -87,12 +87,17 @@ DECLARE_GLOBAL_DATA_PTR;
 #define OTG_ID_PAD_CTRL (PAD_CTL_PKE | PAD_CTL_PUE |		\
 	PAD_CTL_PUS_47K_UP  | PAD_CTL_SPEED_LOW |		\
 	PAD_CTL_DSE_80ohm   | PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
-
+#if 0
 #define IOX_SDI IMX_GPIO_NR(5, 10)
 #define IOX_STCP IMX_GPIO_NR(5, 7)
 #define IOX_SHCP IMX_GPIO_NR(5, 11)
 #define IOX_OE IMX_GPIO_NR(5, 8)
+#endif
+#define ENET1_RESET IMX_GPIO_NR(5, 7) /* SNVS_TAMPER7 ENET1 RESET: GPIO5_IO07*/
+#define ENET2_RESET IMX_GPIO_NR(5, 8) /* SNVS_TAMPER8 ENET2 RESET: GPIO5_IO08*/
 
+
+#if 0
 static iomux_v3_cfg_t const iox_pads[] = {
 	/* IOX_SDI */
 	MX6_PAD_BOOT_MODE0__GPIO5_IO10 | MUX_PAD_CTRL(NO_PAD_CTRL),
@@ -103,6 +108,8 @@ static iomux_v3_cfg_t const iox_pads[] = {
 	/* IOX_nOE */
 	MX6_PAD_SNVS_TAMPER8__GPIO5_IO08 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
+#endif
+
 
 /*
  * HDMI_nRST --> Q0
@@ -145,6 +152,8 @@ static enum qn_func qn_output[8] = {
 	qn_disable, qn_disable
 };
 
+/* remove 74LV595 init */
+#if 0
 static void iox74lv_init(void)
 {
 	int i;
@@ -219,7 +228,7 @@ void iox74lv_set(int index)
 	  */
 	gpio_direction_output(IOX_STCP, 1);
 };
-
+#endif
 
 #ifdef CONFIG_SYS_I2C_MXC
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
@@ -648,6 +657,7 @@ static iomux_v3_cfg_t const fec1_pads[] = {
 	MX6_PAD_ENET1_RX_DATA1__ENET1_RDATA01 | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET1_RX_ER__ENET1_RX_ER | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET1_RX_EN__ENET1_RX_EN | MUX_PAD_CTRL(ENET_PAD_CTRL),
+	MX6_PAD_SNVS_TAMPER7__GPIO5_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 static iomux_v3_cfg_t const fec2_pads[] = {
@@ -663,18 +673,28 @@ static iomux_v3_cfg_t const fec2_pads[] = {
 	MX6_PAD_ENET2_RX_DATA1__ENET2_RDATA01 | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET2_RX_EN__ENET2_RX_EN | MUX_PAD_CTRL(ENET_PAD_CTRL),
 	MX6_PAD_ENET2_RX_ER__ENET2_RX_ER | MUX_PAD_CTRL(ENET_PAD_CTRL),
+	MX6_PAD_SNVS_TAMPER8__GPIO5_IO08 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 static void setup_iomux_fec(int fec_id)
 {
-	if (fec_id == 0)
+	if (fec_id == 0){
 		imx_iomux_v3_setup_multiple_pads(fec1_pads,
 						 ARRAY_SIZE(fec1_pads));
-	else
+		gpio_direction_output(ENET1_RESET, 1);  
+		gpio_set_value(ENET1_RESET, 0);  
+		mdelay(20); 
+		gpio_set_value(ENET1_RESET, 1); 
+	}
+	else{
 		imx_iomux_v3_setup_multiple_pads(fec2_pads,
-						 ARRAY_SIZE(fec2_pads));
+				ARRAY_SIZE(fec2_pads));
+		gpio_direction_output(ENET2_RESET, 1);
+		gpio_set_value(ENET2_RESET, 0);  
+		mdelay(20);
+		gpio_set_value(ENET2_RESET, 1);
+	}
 }
-
 int board_eth_init(bd_t *bis)
 {
 	setup_iomux_fec(CONFIG_FEC_ENET_DEV);
@@ -812,9 +832,10 @@ int board_init(void)
 	/* Address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
+#if 0
 	imx_iomux_v3_setup_multiple_pads(iox_pads, ARRAY_SIZE(iox_pads));
-
 	iox74lv_init();
+#endif
 
 #ifdef CONFIG_SYS_I2C_MXC
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
@@ -878,7 +899,7 @@ int checkboard(void)
 	if (is_mx6ull_9x9_evk())
 		puts("Board: MX6ULL 9x9 EVK\n");
 	else
-		puts("Board: MX6ULL 14x14 EVK\n");
+		puts("Board: MX6ULL ALIENTEK EVB\n");
 
 	return 0;
 }
@@ -1140,5 +1161,6 @@ void board_init_f(ulong dummy)
 
 	/* load/boot image from boot device */
 	board_init_r(NULL, 0);
+
 }
 #endif

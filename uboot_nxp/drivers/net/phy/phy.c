@@ -227,6 +227,26 @@ int genphy_update_link(struct phy_device *phydev)
 	 * (ie - we're capable and it's not done)
 	 */
 	mii_reg = phy_read(phydev, MDIO_DEVAD_NONE, MII_BMSR);
+	
+#ifdef CONFIG_PHY_SMSC
+	/*
+	 * soft reset for LAN8720 write BMCR_RESET to  reg BMCR 
+	 * if reset success the bit bit15 will be 0
+	 * */
+
+	static int lan8720_flag = 0;  int bmcr_reg = 0; 
+	if (lan8720_flag == 0) { 
+		bmcr_reg = phy_read(phydev, MDIO_DEVAD_NONE, MII_BMCR);    
+	        phy_write(phydev, MDIO_DEVAD_NONE, MII_BMCR, BMCR_RESET);    
+		while(phy_read(phydev, MDIO_DEVAD_NONE, MII_BMCR) & 0X8000) { 
+			 udelay(100); 
+	  	} 
+        	phy_write(phydev, MDIO_DEVAD_NONE, MII_BMCR, bmcr_reg);	
+	 	lan8720_flag = 1;
+	 }
+#endif
+
+
 
 	/*
 	 * If we already saw the link up, and it hasn't gone down, then
